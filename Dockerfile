@@ -2,18 +2,20 @@
 FROM golang:1.15 as nps-builder
 ARG GOPROXY=direct
 WORKDIR /go/src/ehang.io/
-RUN git clone git@github.com:ehang-io/nps.git && cd nps && go get -d -v ./...
+RUN git clone git@github.com:ehang-io/nps.git 
+RUN cd nps && go get -d -v ./...
 RUN CGO_ENABLED=0 go build -ldflags="-w -s -extldflags -static" ./cmd/nps/nps.go
 
 # 第二阶段：构建npc客户端
 FROM golang:1.15 as npc-builder
 ARG GOPROXY=direct
 WORKDIR /go/src/ehang.io/
-RUN git clone git@github.com:ehang-io/nps.git && cd nps && go get -d -v ./...
+RUN git clone git@github.com:ehang-io/nps.git 
+RUN cd nps && go get -d -v ./...
 RUN CGO_ENABLED=0 go build -ldflags="-w -s -extldflags -static" ./cmd/npc/npc.go
 
 # 最终阶段：合并并添加启动脚本
-FROM scratch
+FROM alpine
 # 从nps-builder复制nps和web文件
 COPY --from=nps-builder /go/src/ehang.io/nps/nps /usr/local/bin/nps
 COPY --from=nps-builder /go/src/ehang.io/nps/web /web
