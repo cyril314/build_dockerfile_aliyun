@@ -1,0 +1,2 @@
+# build_dockerfile_aliyun
+将dockerfile生成的镜像上传到aliyun
