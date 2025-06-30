@@ -1,0 +1,28 @@
+name: boost
+
+on:
+  workflow_dispatch:
+    inputs:
+      push_name:
+        description: 'Image_tag NAME'
+        required: true
+        default: 'nps_v0.26.10'
+      user_val:
+        description: 'Docker USER'
+        required: true
+        default: 'imocence'
+      pwd_val:
+        description: 'Docker PWD'
+        required: true
+        default: ''
+
+jobs:
+  build:
+    name: Build Images
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Push Image
+        run: chmod +x push_aliyun.sh && bash push_aliyun.sh ${{ github.event.inputs.image_name }} ${{ github.event.inputs.push_name }} ${{ github.event.inputs.user_val }} ${{ github.event.inputs.pwd_val }}
