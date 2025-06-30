@@ -1,2 +1,6 @@
 # build_dockerfile_aliyun
 将dockerfile生成的镜像上传到aliyun
+
+# 欢迎Fork使用
+你可以先将这个仓库Fork到你自己的仓库中。
+将你的Dockerfile文件内容更新到仓库中即可去Actions中执行编译上传的功能
