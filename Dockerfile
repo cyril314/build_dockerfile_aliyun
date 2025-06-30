@@ -1,32 +1,36 @@
-# 第一阶段：构建nps服务端
-FROM golang:1.15 as nps-builder
-ARG GOPROXY=direct
-WORKDIR /go/src/ehang.io/
-RUN git clone https://github.com/ehang-io/nps.git && cd nps && pwd && ls
-RUN go get -d -v ./... 
-RUN CGO_ENABLED=0 go build -ldflags="-w -s -extldflags -static" ./cmd/nps/nps.go
+# 构建阶段：使用 Go 1.15 编译 NPS 和 NPC
+FROM golang:1.15 AS builder
 
-# 第二阶段：构建npc客户端
-FROM golang:1.15 as npc-builder
-ARG GOPROXY=direct
-WORKDIR /go/src/ehang.io/
-RUN git clone https://github.com/ehang-io/nps.git && cd nps && pwd && ls
-RUN go get -d -v ./... 
-RUN CGO_ENABLED=0 go build -ldflags="-w -s -extldflags -static" ./cmd/npc/npc.go
+ARG GOPROXY=https://goproxy.cn,direct
+WORKDIR /build
 
-# 最终阶段：合并并添加启动脚本
-FROM alpine
-# 从nps-builder复制nps和web文件
-COPY --from=nps-builder /go/src/ehang.io/nps/nps /usr/local/bin/nps
-COPY --from=nps-builder /go/src/ehang.io/nps/web /web
-# 从npc-builder复制npc
-COPY --from=npc-builder /go/src/ehang.io/nps/npc /usr/local/bin/npc
+# 克隆 NPS 源码
+RUN git clone https://github.com/ehang-io/nps.git . \
+    && go mod download
 
-# 添加启动脚本
-RUN echo -e '#!/bin/sh\nif [ "$MODE" = "server" ]; then\n  exec nps\nelif [ "$MODE" = "client" ]; then\n  exec npc\nelse\n  echo "Please set MODE=server or MODE=client"\n  exit 1\nfi' > /entrypoint.sh && \
-    chmod +x /entrypoint.sh
+# 编译服务端 (nps)
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o nps ./cmd/nps
+
+# 编译客户端 (npc)
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o npc ./cmd/npc
+
+# 最终阶段：基于 Alpine 的轻量级镜像
+FROM alpine:latest
+
+# 从 builder 复制二进制文件
+COPY --from=builder /build/nps /usr/local/bin/
+COPY --from=builder /build/npc /usr/local/bin/
+COPY --from=builder /build/web /web
 
 # 创建配置文件目录
 VOLUME /conf
+
+# 添加启动脚本
+RUN echo -e '#!/bin/sh\n\
+if [ "$MODE" = "server" ]; then\n\
+    exec nps\n\
+else\n\
+     exec npc\n\
+fi' > /entrypoint.sh && chmod +x /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
