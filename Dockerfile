@@ -29,14 +29,14 @@ VOLUME /conf
 # 添加启动脚本
 RUN echo -e '#!/bin/sh\n\
 if [ "$MODE" = "server" ]; then\n\
-    if [ "$(ls -A /conf)" ]; then\n\
+    if [ ! "$(ls -A /conf)" ]; then\n\
         echo 'Initializing /conf files...';\n\
         rm -f /conf_default/npc.conf\n\
         cp -r /conf_default/* /conf/;\n\
     fi;\n\
     exec nps\n\
 else\n\
-    if [ "$(ls -A /conf)" ]; then\n\
+    if [ ! "$(ls -A /conf)" ]; then\n\
         echo 'Initializing /conf/npc.conf files...';\n\
         cp -r /conf_default/npc.conf /conf/;\n\
     fi;\n\
