@@ -9,10 +9,10 @@ RUN git clone https://github.com/ehang-io/nps.git . \
     && go mod download
 
 # 编译服务端 (nps)
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o nps ./cmd/nps
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s -extldflags -static" -o nps ./cmd/nps
 
 # 编译客户端 (npc)
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o npc ./cmd/npc
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s -extldflags -static" -o npc ./cmd/npc
 
 # 最终阶段：基于 Alpine 的轻量级镜像
 FROM alpine:latest
@@ -21,6 +21,7 @@ FROM alpine:latest
 COPY --from=builder /build/nps /usr/local/bin/
 COPY --from=builder /build/npc /usr/local/bin/
 COPY --from=builder /build/web /web
+COPY --from=builder /build/conf /conf
 
 # 创建配置文件目录
 VOLUME /conf
